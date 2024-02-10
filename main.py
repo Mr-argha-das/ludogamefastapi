@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from mongoengine import connect
 from usermodel import UserModel
 from userbalance import UserBalance
+from userwithdrawal import UserWithdrawal
 import json
 
 app = FastAPI()
@@ -102,4 +103,38 @@ async def updatebalance(userid: str, value: bool, amount: float):
             "data": fromjson,
             "status": True,
         }
-            
+        
+@app.post("/withdrawal-req")
+async def withdrawalreq(userid: str, name: str, amount: float, ):
+    usercurrent = UserBalance.objects(user_id=userid).first()
+    if usercurrent.balance > amount:
+        userWithdrawal = UserWithdrawal(userid=userid, name=name, amount=amount)
+        a = usercurrent.balance - amount
+        userWithdrawal.save()
+        usercurrent.balance = a
+        usercurrent.save()
+        tojson = usercurrent.to_json()
+        fromjson = json.loads(tojson)
+        
+        return {
+            "message":"Your requesit succes ",
+            "data": fromjson,
+            "status":True
+        }
+    else:
+        return {
+            "message":"In your wallet you not have ammount to withdrawal",
+            "data": None,
+            "status":True
+        }
+        
+
+@app.get("/all-withdrawal-req-list")
+async def withdrawalreqlist():
+    userdata = UserWithdrawal.objects.all()
+    tojson = userdata.to_json()
+    fromjson = json.loads(tojson)
+    return {
+        "data": fromjson,
+        "status":True
+    }
