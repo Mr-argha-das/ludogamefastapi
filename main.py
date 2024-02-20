@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from mongoengine import connect
-from usermodel import UserModel
-from userbalance import UserBalance
+from usermodel import UserModel, UserJsonModel, UserloginModel
+from userbalance import UserBalance, UserBalanceJsonModel, UserWithdrawalReq
 from userwithdrawal import UserWithdrawal
 from pymongo import MongoClient
 import json
@@ -21,8 +21,8 @@ async def userLsit():
     return fromjson
 
 @app.post("/create-user")
-async def Sginup(enloginid: str, upid: str):
-    user = UserModel(enloginid=enloginid, upid=upid)
+async def Sginup(userJson: UserJsonModel):
+    user = UserModel(enloginid=userJson.enloginid, upid=userJson.upid)
     user.save()
     data = user.to_json()
     data2 = json.loads(data)
@@ -33,8 +33,8 @@ async def Sginup(enloginid: str, upid: str):
     }
     
 @app.post("/user-login")
-async def userLogin(enloginid: str):
-    userdata = UserModel.objects(enloginid=enloginid).first()
+async def userLogin(userJson: UserloginModel):
+    userdata = UserModel.objects(enloginid=userJson.enLoginid).first()
     data = userdata.to_json()
     jsondata = json.loads(data)
     if userdata:
@@ -51,8 +51,8 @@ async def userLogin(enloginid: str):
         
         
 @app.post("/add-user-balance")
-async def addUesrBalance(userId: str, balance: float):
-    addUserBl = UserBalance(user_id=userId, balance=balance)
+async def addUesrBalance(item: UserBalanceJsonModel):
+    addUserBl = UserBalance(user_id=item.user_id, balance=item.balance)
     addUserBl.save()
     return {
         "message":"User balance add",
@@ -109,10 +109,10 @@ async def updatebalance(userid: str, value: bool, amount: float):
         }
         
 @app.post("/withdrawal-req")
-async def withdrawalreq(userid: str, amount: float, ):
+async def withdrawalreq(userid: str, name: str, amount: float, ):
     usercurrent = UserBalance.objects(user_id=userid).first()
     if usercurrent.balance > amount:
-        userWithdrawal = UserWithdrawal(userid=userid, amount=amount)
+        userWithdrawal = UserWithdrawal(userid=userid, name=name, amount=amount)
         a = usercurrent.balance - amount
         userWithdrawal.save()
         usercurrent.balance = a
