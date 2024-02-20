@@ -3,11 +3,15 @@ from mongoengine import connect
 from usermodel import UserModel
 from userbalance import UserBalance
 from userwithdrawal import UserWithdrawal
+from pymongo import MongoClient
 import json
-
+from gamepool import GamePool
+from bson import ObjectId
 app = FastAPI()
 
 connect('simpleLudo', host="mongodb+srv://avbigbuddy:nZ4ATPTwJjzYnm20@cluster0.wplpkxz.mongodb.net/simpleLudo")
+
+
 
 @app.get("/user-list")
 async def userLsit():
@@ -105,10 +109,10 @@ async def updatebalance(userid: str, value: bool, amount: float):
         }
         
 @app.post("/withdrawal-req")
-async def withdrawalreq(userid: str, name: str, amount: float, ):
+async def withdrawalreq(userid: str, amount: float, ):
     usercurrent = UserBalance.objects(user_id=userid).first()
     if usercurrent.balance > amount:
-        userWithdrawal = UserWithdrawal(userid=userid, name=name, amount=amount)
+        userWithdrawal = UserWithdrawal(userid=userid, amount=amount)
         a = usercurrent.balance - amount
         userWithdrawal.save()
         usercurrent.balance = a
@@ -128,6 +132,26 @@ async def withdrawalreq(userid: str, name: str, amount: float, ):
             "status":True
         }
         
+@app.post("/confirem-withdrawal")
+async def confirmWithdrawal(id: str, trnx: str, status: bool):
+    withdraw= UserWithdrawal.objects.get(id=ObjectId(id))
+    if withdraw:
+        withdraw.trnx = trnx
+        withdraw.status = status
+        withdraw.save()
+        tojson = withdraw.to_json()
+        fromjson = json.loads(tojson)
+        return {
+        "data": fromjson,
+        "status":True
+        }
+    
+    return {
+        "data": None,
+        "status":True
+    }
+
+
 
 @app.get("/all-withdrawal-req-list")
 async def withdrawalreqlist():
@@ -137,4 +161,34 @@ async def withdrawalreqlist():
     return {
         "data": fromjson,
         "status":True
+    }
+    
+@app.post("/add-new-game-pool")
+async def addnewgamepool(investment: float,):
+    persion1 = investment*2.5
+    persion2 = investment*0.5
+    persion3 = investment*0.25
+    persion4 = investment*0
+    a = persion1+persion2+persion3+persion4
+    b = investment-a
+    gamepool = GamePool(investment=investment, persion1=persion1, persion2=persion2, persion3=persion3, persion4=persion4, tolalamount=(investment*4), ourincome=b)
+    gamepool.save()
+    tojson = gamepool.to_json()
+    fromjson = json.loads(tojson)
+    return {
+        "message":"New pool ready",
+        "data":fromjson,
+        "status":True
+    }
+    
+@app.get("/get-all-game-pool")
+async def getallgamepool():
+    gamepoolLsit = GamePool.objects.all()
+    tojson = gamepoolLsit.to_json()
+    fromjson = json.loads(tojson)
+    return {
+        "message": "here is your all game pool",
+        "data": fromjson,
+        "status": True
+        
     }
