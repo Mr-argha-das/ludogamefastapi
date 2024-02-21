@@ -22,6 +22,13 @@ async def userLsit():
 
 @app.post("/create-user")
 async def Sginup(userJson: UserJsonModel):
+    findUser = UserModel.objects(enloginid=userJson.enloginid).first()
+    if(findUser):
+        return {
+            "message":"User already have",
+            "data":None,
+            "status":True
+        }
     user = UserModel(enloginid=userJson.enloginid, upid=userJson.upid)
     user.save()
     data = user.to_json()
