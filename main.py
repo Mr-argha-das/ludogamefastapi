@@ -41,15 +41,19 @@ async def Sginup(userJson: UserJsonModel):
     
 @app.post("/user-login")
 async def userLogin(userJson: UserloginModel):
-    userdata = UserModel.objects(enloginid=userJson.enLoginid).first()
+    print(userJson.enloginid)
+    userdata = UserModel.objects(enloginid=userJson.enloginid).first()
+    print(userdata)
     data = userdata.to_json()
+    print(data)
     jsondata = json.loads(data)
-    if userdata:
-        {
+    if (userdata):
+        return {
             "message":"User Login success",
             "data":jsondata,
             "status":True,
         }
+        
     return  {
             "message":"User Login faild",
             "data":None,

@@ -14,4 +14,4 @@ class UserJsonModel(BaseModel):
 
 
 class UserloginModel(BaseModel):
-    enLoginid: str
+    enloginid: str
